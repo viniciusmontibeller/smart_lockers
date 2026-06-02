@@ -25,10 +25,10 @@ var db = new sqlite3.Database('./dados.db', (err) => {
         console.log('Conectado ao SQLite!');
 });
 
-await db.run("PRAGMA foreign_keys = ON;");
-
 // Estabelecer criacao de tabela. Cria a tabela cadastro, caso ela não exista
 db.serialize(() => {
+        db.run("PRAGMA foreign_keys = ON;");
+
         db.run(`CREATE TABLE IF NOT EXISTS armarios (
                         id integer PRIMARY KEY,
                         condominio text,
@@ -46,7 +46,7 @@ db.serialize(() => {
                         armario_id INTEGER,
                         numero INTEGER NOT NULL,
                         tamanho TEXT NOT NULL CHECK(TAMANHO IN ('P', 'M', 'G', 'GG')),
-                        FOREIGN KEY (armario_id) REFERENCES armarios (id),
+                        FOREIGN KEY (armario_id) REFERENCES armarios(id) ON DELETE CASCADE,
                         PRIMARY KEY (armario_id, numero)
                 )`, 
         [], (err) => {
@@ -73,101 +73,45 @@ db.serialize(() => {
 app.post('/armarios', (req, res, next) => {
         db.serialize(() => {
                 const data = req.body
-                try {
-                        db.run(`INSERT INTO armarios(id, condominio, cep, numero) VALUES(?,?,?,?)`, 
-                                [data.id, data.condominio, data.cep, data.numero], (err) => {
+
+                db.run(`INSERT INTO armarios(id, condominio, cep, numero) VALUES(?,?,?,?)`, 
+                        [data.id, data.condominio, data.cep, data.numero],
+                        (err) => {
                                 if (err) {
                                         console.log("Error: " + err);
-                                        res.status(500).send('Erro ao cadastrar armario');
-                                } else {
-                                        console.log('Armario cadastrado com sucesso!');
-                                        res.status(200).send('Armario cadastrado com sucesso!');
+                                        return res.status(500).send('Erro ao cadastrar armario');
                                 }
-                        });
-                        
-                        let numero = 1
-                        Object.entries(data.tamanhos).forEach(([tamanho, quantidade]) => {
-                                for (let i = 1; i <= Number(quantidade); i ++) {
-                                        db.run(`INSERT INTO gavetas(armario_id, numero, tamanho, ocupado) VALUES(?,?,?,?)`, 
-                                                [data.id, numero, tamanho, false], (err) => {
-                                                if (err) {
-                                                        console.log("Error: " + err);
-                                                        throw new Error('Erro ao cadastrar gaveta')
-                                                }
-                                        });
-                                numero++
+
+                                let numero = 1
+                                let erroGaveta = false
+
+                                Object.entries(data.tamanhos).forEach(([tamanho, quantidade]) => {
+                                        for (let i = 1; i <= Number(quantidade); i ++) {
+                                                db.run(`INSERT INTO gavetas(armario_id, numero, tamanho) VALUES(?,?,?)`, 
+                                                        [data.id, numero, tamanho],
+                                                        (err) => {
+                                                                if (err) {
+                                                                        erroGaveta = true;
+                                                                        console.log("Error: " + err);
+                                                                }
+                                                        }
+                                                );
+
+                                                numero++
+                                        }
+                                })
+
+                                if (erroGaveta) {
+                                        return res.status(500).send('Armario criado, mas houve erro ao cadastrar gavetas');
+                                }
+
+                                return res.status(201).send('Armario e gavetas cadastrados com sucesso!');
                         }
-                        })
-
-                        console.log('Gavetas cadastradas com sucesso!');
-                        res.status(200).send('Gavetas cadastradas com sucesso!');
-
-                } catch (error) {
-                        console.error(error.message)
-                }
-
-
-                // const gavetasP = data.tamanho['P']
-                // const gavetasM = data.tamanho['M']
-                // const gavetasG = data.tamanho['G']
-                // const gavetasGG = data.tamanho['GG']
-
-                // for (let i = 1; i <= gavetasP; i ++){
-                //         db.run(`INSERT INTO gavetas(armario_id, numero, tamanho, ocupado) VALUES(?,?,?,?)`, 
-                //                 [data.id, numero, Object.keys(data.tamanho)[0], false], (err) => {
-                //                 if (err) {
-                //                         console.log("Error: " + err);
-                //                         res.status(500).send('Erro ao cadastrar cliente.');
-                //                 } else {
-                //                         console.log('Cliente cadastrado com sucesso!');
-                //                         res.status(200).send('Cliente cadastrado com sucesso!');
-                //                 }
-                //         });
-                //         numero++
-                // }
-                // for (let i = 1; i <= gavetasM; i ++){
-                //         db.run(`INSERT INTO gavetas(armario_id, numero, tamanho, ocupado) VALUES(?,?,?)`, 
-                //                 [data.armario_id, numero, Object.keys(data.tamanho)[1], false], (err) => {
-                //                 if (err) {
-                //                         console.log("Error: " + err);
-                //                         res.status(500).send('Erro ao cadastrar cliente.');
-                //                 } else {
-                //                         console.log('Cliente cadastrado com sucesso!');
-                //                         res.status(200).send('Cliente cadastrado com sucesso!');
-                //                 }
-                //         });
-                //         numero++
-                // }
-                // for (let i = 1; i <= gavetasG; i ++){
-                //         db.run(`INSERT INTO gavetas(armario_id, numero, tamanho, ocupado) VALUES(?,?,?)`, 
-                //                 [data.armario_id, numero, Object.keys(data.tamanho)[2], false], (err) => {
-                //                 if (err) {
-                //                         console.log("Error: " + err);
-                //                         res.status(500).send('Erro ao cadastrar cliente.');
-                //                 } else {
-                //                         console.log('Cliente cadastrado com sucesso!');
-                //                         res.status(200).send('Cliente cadastrado com sucesso!');
-                //                 }
-                //         });
-                //         numero++
-                // }        
-                // for (let i = 1; i <= gavetasGG; i ++){
-                //         db.run(`INSERT INTO gavetas(armario_id, numero, tamanho, ocupado) VALUES(?,?,?)`, 
-                //                 [data.armario_id, numero, Object.keys(data.tamanho)[3], false], (err) => {
-                //                 if (err) {
-                //                         console.log("Error: " + err);
-                //                         res.status(500).send('Erro ao cadastrar cliente.');
-                //                 } else {
-                //                         console.log('Cliente cadastrado com sucesso!');
-                //                         res.status(200).send('Cliente cadastrado com sucesso!');
-                //                 }
-                //         });
-                //         numero++
-                // }
-
+                );
         })
 });
 
+// busca todos os armarios
 app.get('/armarios', (req, res, next) => {
     db.all(`SELECT * FROM armarios`, [], (err, result) => {
         if (err) {
@@ -179,8 +123,9 @@ app.get('/armarios', (req, res, next) => {
     });
 });
 
+// retorna gavetas por armario selecionado
 app.get('/gavetas/:id', (req, res, next) => {
-    db.all(`SELECT * FROM gavetas WHERE armario_id = ?`, [], (err, result) => {
+    db.all(`SELECT * FROM gavetas WHERE armario_id = ?`, [req.params.id], (err, result) => {
         if (err) {
              console.log("Erro: " + err);
              res.status(500).send('Erro ao obter dados.');
@@ -190,8 +135,21 @@ app.get('/gavetas/:id', (req, res, next) => {
     });
 });
 
+// busca todos os armarios e gavetas - > Reduntante, pode ser apagado
 app.get('/armariosegavetas', (req, res, next) => {
     db.all(`SELECT * FROM armarios JOIN gavetas ON armarios.id = gavetas.armario_id`, [], (err, result) => {
+        if (err) {
+             console.log("Erro: " + err);
+             res.status(500).send('Erro ao obter dados.');
+        } else {
+            res.status(200).json(result);
+        }
+    });
+});
+
+// retorna armario e suas gavetas - > Reduntante, pode ser apagado
+app.get('/armariocomgavetas/:id', (req, res, next) => {
+    db.all(`SELECT * FROM armarios JOIN gavetas ON armarios.id = gavetas.armario_id WHERE gavetas.armario_id = ?`, [req.params.id], (err, result) => {
         if (err) {
              console.log("Erro: " + err);
              res.status(500).send('Erro ao obter dados.');
@@ -214,9 +172,9 @@ app.patch('/armarios/:id', (req, res, next) => {
             }
     });
 });
-
 // nao sera alterado as gavetas, criou o armario criou gavetas pela sua existencia.
 
+// Ao deletar o armario, e deletado as gavetas -> FOREIGN KEY (armario_id) REFERENCES armarios(id) ON DELETE CASCADE
 app.delete('/armarios/:id', (req, res, next) => {
         db.serialize(() => {
                 db.run(`DELETE FROM armarios WHERE id = ?`, req.params.id, function(err) {
@@ -227,17 +185,6 @@ app.delete('/armarios/:id', (req, res, next) => {
                      res.status(404).send('Armario não encontrado.');
                   } else {
                      res.status(200).send('Armario removido com sucesso!');
-                  }
-                });
-
-                db.run(`DELETE FROM gavetas WHERE armario_id = ?`, req.params.id, function(err) {
-                  if (err){
-                     res.status(500).send('Erro ao remover gavetas.');
-                  } else if (this.changes == 0) {
-                     console.log("Gavetas não encontradas.");
-                     res.status(404).send('Gavetas não encontradas.');
-                  } else {
-                     res.status(200).send('Gavetas removidas com sucesso!');
                   }
                 });
         })
