@@ -45,16 +45,63 @@ db.run(`CREATE TABLE IF NOT EXISTS entregas (
                 }
 });
 
+
+//verificação gavetas
+app.get('/gavetas-livres/:tamanho', async (req, res) => {
+    try {
+        const resposta = await axios.get(
+            `http://localhost:8080/gavetas/tamanho/${req.params.tamanho}`
+        );
+        const gavetas = resposta.data;
+        db.all(
+            `SELECT armario_id, numero_gaveta
+             FROM entregas`,
+            [],
+            (err, entregas) => {
+                if (err) {
+                    return res.status(500)
+                        .send('Erro ao consultar entregas.');
+                }
+                const livres = gavetas.filter(gaveta =>
+
+                    !entregas.some(entrega =>
+
+                        entrega.armario_id == gaveta.armario_id &&
+                        entrega.numero_gaveta == gaveta.numero
+                    )
+                );
+                res.status(200).json(livres);
+            }
+        );
+    } catch {
+        res.status(500).send(
+            'Erro ao consultar lockers.'
+        );
+    }
+});
+
 //CRIA ENTREGA
 app.post('/entrega', async (req, res) => {
 
+
+let gaveta    
         try {
         // Verifica se o condômino existe
         await axios.get(
             `http://localhost:8090/condomino/${req.body.cpf}`
         );
 
-        //fazer verificação da liberdade da gaveta
+        // Verifica gavetas livres
+        const resposta = await axios.get(
+            `http://localhost:8070/gavetas-livres/${req.body.tamanho}`
+        );
+
+        if (resposta.data.length === 0) {
+            return res.status(400)
+                .send('Não há gavetas disponíveis.');
+        }
+
+        gaveta = resposta.data[0]
 
     } catch (err) {
 
@@ -75,14 +122,14 @@ app.post('/entrega', async (req, res) => {
             armario_id,
             numero_gaveta,
             data,
-            hora,
+            hora
         )
-        VALUES (?, ?, ?, ?, ?, ?,)`,
+        VALUES (?, ?, ?, ?, ?, ?)`,
         [
             req.body.entrega_id,
             req.body.cpf,
-            req.body.armario_id,
-            req.body.numero_gaveta,
+            gaveta.armario_id,
+            gaveta.numero,
             req.body.data,
             req.body.hora,
         ],
@@ -101,8 +148,8 @@ app.post('/entrega', async (req, res) => {
                         entrega_id: req.body.entrega_id,
                         retirado: 0,
                         cpf: req.body.cpf,
-                        armario_id: req.body.armario_id,
-                        numero_gaveta: req.body.numero_gaveta,
+                        armario_id: gaveta.armario_id,
+                        numero_gaveta: gaveta.numero,
                         data: req.body.data,
                         hora: req.body.hora
                     }
@@ -114,6 +161,7 @@ app.post('/entrega', async (req, res) => {
 
             res.status(201).send(
                 'Entrega cadastrada com sucesso.'
+                
             );
         }
     );

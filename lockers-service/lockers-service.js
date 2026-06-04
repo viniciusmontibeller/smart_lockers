@@ -135,6 +135,26 @@ app.get('/gavetas/:id', (req, res, next) => {
     });
 });
 
+
+// retirna gaaveta com id e tamanho
+app.get('/gavetas/tamanho/:tamanho', (req, res) => {
+
+    db.all(
+        `SELECT *
+         FROM gavetas
+         WHERE tamanho = ?`,
+        [req.params.tamanho],
+        (err, result) => {
+
+            if (err) {
+                return res.status(500).send();
+            }
+
+            res.status(200).json(result);
+        }
+    );
+});
+
 // busca todos os armarios e gavetas - > Reduntante, pode ser apagado
 app.get('/armariosegavetas', (req, res, next) => {
     db.all(`SELECT * FROM armarios JOIN gavetas ON armarios.id = gavetas.armario_id`, [], (err, result) => {
