@@ -17,7 +17,7 @@ app.listen(porta, () => {
 const sqlite3 = require('sqlite3');
 
 // Acessa o arquivo com o banco de dados
-var db = new sqlite3.Database('./dados.db', (err) => {
+var db = new sqlite3.Database('./lockers.db', (err) => {
         if (err) {
             console.log('ERRO: não foi possível conectar ao SQLite.');
             throw err;
@@ -32,7 +32,7 @@ db.serialize(() => {
         db.run(`CREATE TABLE IF NOT EXISTS armarios (
                         id integer PRIMARY KEY,
                         condominio text,
-                        cep integer,
+                        cep TEXT,
                         numero integer
                 )`, 
         [], (err) => {
@@ -45,7 +45,7 @@ db.serialize(() => {
         db.run(`CREATE TABLE IF NOT EXISTS gavetas (
                         armario_id INTEGER,
                         numero INTEGER NOT NULL,
-                        tamanho TEXT NOT NULL CHECK(TAMANHO IN ('P', 'M', 'G', 'GG')),
+                        tamanho TEXT NOT NULL CHECK(TAMANHO IN ('P', 'M', 'G', 'XG')),
                         FOREIGN KEY (armario_id) REFERENCES armarios(id) ON DELETE CASCADE,
                         PRIMARY KEY (armario_id, numero)
                 )`, 
@@ -66,7 +66,7 @@ db.serialize(() => {
 //                 'P': '4',
 //                 'M': '6',
 //                 'G': '4',
-//                 'GG': '9'
+//                 'XG': '9'
 //         }
 // }
 

@@ -17,7 +17,7 @@ app.listen(porta, () => {
 const sqlite3 = require('sqlite3');
 
 // Acessa o arquivo com o banco de dados
-var db = new sqlite3.Database('./dados.db', (err) => {
+var db = new sqlite3.Database('./entregas.db', (err) => {
         if (err) {
             console.log('ERRO: não foi possível conectar ao SQLite.');
             throw err;
