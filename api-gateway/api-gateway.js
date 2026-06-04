@@ -5,24 +5,27 @@ var logger = require('morgan');
 
 app.use(logger('dev'));
 
-// EXEMPLO
+function selectProxyHost(req) {
+    if (req.path.startsWith('/armarios') || req.path.startsWith('/gavetas'))
+        return 'http://localhost:8080';
+    else if (req.path.startsWith('/condominos'))
+        return 'http://localhost:8090';
+    else if (req.path.startsWith('/entregas'))
+        return 'http://localhost:8070';
+    else if (req.path.startsWith('/log'))
+        return 'http://localhost:8060';
+    else return null;
+}
 
-// function selectProxyHost(req) {
-//     if (req.path.startsWith('/Clientes'))
-//         return 'http://localhost:8080/';
-//     else if (req.path.startsWith('/Pontos'))
-//         return 'http://localhost:8090/';
-//     else return null;
-// }
+app.use((req, res, next) => {
+    var proxyHost = selectProxyHost(req);
+  
+    if (proxyHost == null)
+        res.status(404).send('Not found');
+    else
+        httpProxy(proxyHost)(req, res, next);
+});
 
-// app.use((req, res, next) => {
-//     var proxyHost = selectProxyHost(req);
-//     if (proxyHost == null)
-//         res.status(404).send('Not found');
-//     else
-//         httpProxy(proxyHost)(req, res, next);
-// });
-
-// app.listen(8000, () => {
-//     console.log('API Gateway iniciado!');
-// });
+app.listen(8000, () => {
+    console.log('API Gateway iniciado na porta 8000!');
+});
