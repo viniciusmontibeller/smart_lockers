@@ -100,3 +100,4 @@ app.delete('/condominos/:cpf', (req, res, next) => {
          res.status(200).send('Condomino removido com sucesso!');
       }
    });
+})
