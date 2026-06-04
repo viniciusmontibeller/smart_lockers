@@ -1,7 +1,6 @@
 // Inicia o Express.js
 const express = require('express');
 const app = express();
-const axios = require('axios');
 
 // Body Parser - usado para processar dados da requisição HTTP
 const bodyParser = require('body-parser');

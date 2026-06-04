@@ -1,5 +1,33 @@
 {
-  "dependencies": {
-    "axios": "^1.17.0"
+  "name": "smart-lockers",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "install:all": "npm install --prefix api-gateway && npm install --prefix lockers-service && npm install --prefix condominos-service && npm install --prefix entregas-service && npm install --prefix logging-service && npm install --prefix abertura-service",
+
+    "start:gateway": "cd api-gateway && node api-gateway.js",
+    "start:lockers": "cd lockers-service && node lockers-service.js",
+    "start:condominos": "cd condominos-service && node condominos-service.js",
+    "start:entregas": "cd entregas-service && node entregas-service.js",
+    "start:logging": "cd logging-service && node logging-service.js",
+    "start:abertura": "cd abertura-service && node abertura-service.js",
+
+    "start": "concurrently \"npm run start:lockers\" \"npm run start:condominos\" \"npm run start:entregas\" \"npm run start:logging\" \"npm run start:abertura\" \"npm run start:gateway\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/viniciusmontibeller/smart_lockers.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/viniciusmontibeller/smart_lockers/issues"
+  },
+  "homepage": "https://github.com/viniciusmontibeller/smart_lockers#readme",
+  "devDependencies": {
+    "concurrently": "^10.0.3"
   }
 }
