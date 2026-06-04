@@ -1,6 +1,7 @@
 // Inicia o Express.js
 const express = require('express');
 const app = express();
+const axios = require('axios');
 
 // Body Parser - usado para processar dados da requisição HTTP
 const bodyParser = require('body-parser');
@@ -27,10 +28,10 @@ var db = new sqlite3.Database('./dados.db', (err) => {
 
 // Estabelecer criacao de tabela. Cria a tabela cadastro, caso ela não exista
 db.run(`CREATE TABLE IF NOT EXISTS condominos
-        (cpf INTEGER PRIMARY KEY NOT NULL
-        nome TEXT NOT NULL
-        telefone INTEGER NOT NULL
-        cep INTEGER NOT NULL
+        (cpf INTEGER PRIMARY KEY NOT NULL,
+        nome TEXT NOT NULL,
+        telefone INTEGER NOT NULL,
+        cep INTEGER NOT NULL,
         numero INTEGER NOT NULL
         )`, 
         [], (err) => {
@@ -43,7 +44,7 @@ db.run(`CREATE TABLE IF NOT EXISTS condominos
 
 //CADASTRA um novo Condomino
 app.post('/condomino', (req, res, next) => {
-    db.run(`INSERT INTO clientes(cpf, nome, telefone, cep, numero) VALUES(?,?,?,?,?)`, 
+    db.run(`INSERT INTO condominos(cpf, nome, telefone, cep, numero) VALUES(?,?,?,?,?)`, 
          [req.body.cpf, req.body.nome, req.body.telefone, req.body.cep, req.body.numero], (err) => {
         if (err) {
             console.log("Error: " + err);
@@ -57,7 +58,7 @@ app.post('/condomino', (req, res, next) => {
 
 //RETORNA cadastro do Condomino com base no CPF
 app.get('/condomino/:cpf', (req, res, next) => {
-    db.get( `SELECT * FROM Condomino WHERE cpf = ?`, 
+    db.get( `SELECT * FROM Condominos WHERE cpf = ?`, 
             req.params.cpf, (err, result) => {
         if (err) { 
             console.log("Erro: "+err);
@@ -73,9 +74,9 @@ app.get('/condomino/:cpf', (req, res, next) => {
 
 // ALTERA o cadastro de um cliente
 app.patch('/condomino/:cpf', (req, res, next) => {
-    db.run(`UPDATE clientes SET nome = COALESCE(?,nome), telefone = COALESCE(?,telefone), 
+    db.run(`UPDATE condominos SET nome = COALESCE(?,nome), telefone = COALESCE(?,telefone), 
         cep = COALESCE(?,cep), numero = COALESCE(?,numero) WHERE cpf = ?`,
-           [req.body.nome, req.body.telefone, req.params.cpf], function(err) {
+           [req.body.nome, req.body.telefone, req.params.cpf, req.body.cep, req.body.numero,], function(err) {
             if (err){
                 res.status(500).send('Erro ao alterar dados.');
             } else if (this.changes == 0) {
@@ -89,7 +90,7 @@ app.patch('/condomino/:cpf', (req, res, next) => {
 
 //REMOVE um cliente do cadastro
 app.delete('/condominos/:cpf', (req, res, next) => {
-    db.run(`DELETE FROM Condominos WHERE cpf = ?`, req.params.cpf, function(err) {
+    db.run(`DELETE FROM condominos WHERE cpf = ?`, req.params.cpf, function(err) {
       if (err){
          res.status(500).send('Erro ao remover Condomino.');
       } else if (this.changes == 0) {
@@ -99,4 +100,3 @@ app.delete('/condominos/:cpf', (req, res, next) => {
          res.status(200).send('Condomino removido com sucesso!');
       }
    });
-});
