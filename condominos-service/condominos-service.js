@@ -17,7 +17,7 @@ app.listen(porta, () => {
 const sqlite3 = require('sqlite3');
 
 // Acessa o arquivo com o banco de dados
-var db = new sqlite3.Database('./dados.db', (err) => {
+var db = new sqlite3.Database('./condominos.db', (err) => {
         if (err) {
             console.log('ERRO: não foi possível conectar ao SQLite.');
             throw err;
@@ -29,9 +29,9 @@ var db = new sqlite3.Database('./dados.db', (err) => {
 db.run(`CREATE TABLE IF NOT EXISTS condominos
         (cpf INTEGER PRIMARY KEY NOT NULL,
         nome TEXT NOT NULL,
-        telefone INTEGER NOT NULL,
-        cep INTEGER NOT NULL,
-        numero INTEGER NOT NULL
+        telefone TEXT NOT NULL,
+        cep TEXT NOT NULL,
+        numero TEXT NOT NULL
         )`, 
         [], (err) => {
            if (err) {
