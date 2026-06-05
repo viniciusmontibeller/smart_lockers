@@ -45,7 +45,7 @@ db.serialize(() => {
         db.run(`CREATE TABLE IF NOT EXISTS gavetas (
                         armario_id INTEGER,
                         numero INTEGER NOT NULL,
-                        tamanho TEXT NOT NULL CHECK(TAMANHO IN ('P', 'M', 'G', 'XG')),
+                        tamanho TEXT NOT NULL CHECK(tamanho IN ('P', 'M', 'G', 'XG')),
                         FOREIGN KEY (armario_id) REFERENCES armarios(id) ON DELETE CASCADE,
                         PRIMARY KEY (armario_id, numero)
                 )`, 
@@ -136,7 +136,7 @@ app.get('/gavetas/:id', (req, res, next) => {
 });
 
 
-// retirna gaaveta com id e tamanho
+// retorna gaveta com id e tamanho
 app.get('/gavetas/:id/tamanho/:tamanho', (req, res) => {
 
     db.all(
@@ -144,7 +144,7 @@ app.get('/gavetas/:id/tamanho/:tamanho', (req, res) => {
          FROM gavetas
          WHERE armario_id = ? AND tamanho = ?`
          ,
-        [req.params.tamanho],
+        [req.params.id, req.params.tamanho],
         (err, result) => {
 
             if (err) {
@@ -197,16 +197,14 @@ app.patch('/armarios/:id', (req, res, next) => {
 
 // Ao deletar o armario, e deletado as gavetas -> FOREIGN KEY (armario_id) REFERENCES armarios(id) ON DELETE CASCADE
 app.delete('/armarios/:id', (req, res, next) => {
-        db.serialize(() => {
-                db.run(`DELETE FROM armarios WHERE id = ?`, req.params.id, function(err) {
-                  if (err){
-                     res.status(500).send('Erro ao remover armario.');
-                  } else if (this.changes == 0) {
-                     console.log("Armario não encontrado.");
-                     res.status(404).send('Armario não encontrado.');
-                  } else {
-                     res.status(200).send('Armario removido com sucesso!');
-                  }
-                });
-        })
+    db.run(`DELETE FROM armarios WHERE id = ?`, req.params.id, function(err) {
+        if (err){
+            res.status(500).send('Erro ao remover armario.');
+        } else if (this.changes == 0) {
+            console.log("Armario não encontrado.");
+            res.status(404).send('Armario não encontrado.');
+        } else {
+            res.status(200).send('Armario removido com sucesso!');
+        }
+    });
 });
