@@ -29,11 +29,12 @@ var db = new sqlite3.Database('./logs.db', (err) => {
 db.run(`CREATE TABLE IF NOT EXISTS logs (
                 entrega_id INTEGER,
                 retirado INTEGER NOT NULL CHECK (retirado IN (0, 1)),
-                cpf INTEGER,
-                armario_id INTEGER,
-                numero_gaveta INTEGER,
-                data DATE,
-                hora TIME,
+                cpf INTEGER NOT NULL,
+                armario_id INTEGER NOT NULL,
+                numero_gaveta INTEGER NOT NULL,
+                tamanho_gaveta TEXT NOT NULL CHECK(tamanho_gaveta IN ('P', 'M', 'G', 'XG')),
+                data DATE NOT NULL,
+                hora TIME NOT NULL,
                 PRIMARY KEY (entrega_id, retirado)
         )`, 
         [], (err) => {
@@ -45,8 +46,8 @@ db.run(`CREATE TABLE IF NOT EXISTS logs (
 
       
 app.post('/log', (req, res, next) => {
-        db.run(`INSERT INTO logs (entrega_id, retirado, cpf, armario_id, numero_gaveta, data, hora) VALUES(?,?,?,?,?,?,?)`,
-                [req.body.entrega_id, req.body.retirado, req.body.cpf, req.body.armario_id, req.body.numero_gaveta, req.body.data, req.body.hora], (err) => {
+        db.run(`INSERT INTO logs (entrega_id, retirado, cpf, armario_id, numero_gaveta, tamanho_gaveta, data, hora) VALUES(?,?,?,?,?,?,?,?)`,
+                [req.body.entrega_id, req.body.retirado, req.body.cpf, req.body.armario_id, req.body.numero_gaveta, req.body.tamanho_gaveta, req.body.data, req.body.hora], (err) => {
                 if (err) {
                         console.log("Error: " + err);
                         res.status(500).send('Erro ao criar entrada de log.');
