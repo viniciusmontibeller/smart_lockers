@@ -46,7 +46,7 @@ db.run(`CREATE TABLE IF NOT EXISTS logs (
       
 app.post('/log', (req, res, next) => {
         db.run(`INSERT INTO logs (entrega_id, retirado, cpf, armario_id, numero_gaveta, data, hora) VALUES(?,?,?,?,?,?,?)`,
-                [req.body.entrega, req.body.retirado, req.body.cpf, req.body.armario, req.body.numero_gaveta, req.body.data, req.body.hora], (err) => {
+                [req.body.entrega_id, req.body.retirado, req.body.cpf, req.body.armario_id, req.body.numero_gaveta, req.body.data, req.body.hora], (err) => {
                 if (err) {
                         console.log("Error: " + err);
                         res.status(500).send('Erro ao criar entrada de log.');

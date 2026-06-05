@@ -81,14 +81,14 @@ app.get('/gavetas-livres/:tamanho', async (req, res) => {
 });
 
 //CRIA ENTREGA
-app.post('/entrega', async (req, res) => {
+app.post('/entregas', async (req, res) => {
 
 
 let gaveta    
         try {
         // Verifica se o condômino existe
         await axios.get(
-            `http://localhost:8090/condomino/${req.body.cpf}`
+            `http://localhost:8090/condominos/${req.body.cpf}`
         );
 
         // Verifica gavetas livres
@@ -247,7 +247,7 @@ app.post('/entregas/abrir', async (req, res) => {
     );
 });
 
-app.get('/entrega/:entrega_id', (req, res, next) => {
+app.get('/entregas/:entrega_id', (req, res, next) => {
     db.get( `SELECT * FROM entregas WHERE entrega_id = ?`, 
             req.params.entrega_id, (err, result) => {
         if (err) { 

@@ -4,6 +4,8 @@ const app = express();
 var logger = require('morgan');
 
 app.use(logger('dev'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 function selectProxyHost(req) {
     if (req.path.startsWith('/armarios') || req.path.startsWith('/gavetas'))
@@ -20,10 +22,16 @@ function selectProxyHost(req) {
 app.use((req, res, next) => {
     var proxyHost = selectProxyHost(req);
   
-    if (proxyHost == null)
+    if (proxyHost == null) {
         res.status(404).send('Not found');
-    else
-        httpProxy(proxyHost)(req, res, next);
+    } else {
+        // CONFIGURAÇÃO DO PROXY: Garante que o body do POST seja repassado intacto
+        httpProxy(proxyHost, {
+            proxyReqBodyDecorator: function(bodyContent, srcReq) {
+                return bodyContent;
+            }
+        })(req, res, next);
+    }
 });
 
 app.listen(8000, () => {

@@ -42,7 +42,7 @@ db.run(`CREATE TABLE IF NOT EXISTS condominos
 
 
 //CADASTRA um novo Condomino
-app.post('/condomino', (req, res, next) => {
+app.post('/condominos', (req, res, next) => {
     db.run(`INSERT INTO condominos(cpf, nome, telefone, cep, numero) VALUES(?,?,?,?,?)`, 
          [req.body.cpf, req.body.nome, req.body.telefone, req.body.cep, req.body.numero], (err) => {
         if (err) {
@@ -56,7 +56,7 @@ app.post('/condomino', (req, res, next) => {
 });
 
 //RETORNA cadastro do Condomino com base no CPF
-app.get('/condomino/:cpf', (req, res, next) => {
+app.get('/condominos/:cpf', (req, res, next) => {
     db.get( `SELECT * FROM Condominos WHERE cpf = ?`, 
             req.params.cpf, (err, result) => {
         if (err) { 
@@ -72,10 +72,10 @@ app.get('/condomino/:cpf', (req, res, next) => {
 });
 
 // ALTERA o cadastro de um cliente
-app.patch('/condomino/:cpf', (req, res, next) => {
+app.patch('/condominos/:cpf', (req, res, next) => {
     db.run(`UPDATE condominos SET nome = COALESCE(?,nome), telefone = COALESCE(?,telefone), 
         cep = COALESCE(?,cep), numero = COALESCE(?,numero) WHERE cpf = ?`,
-           [req.body.nome, req.body.telefone, req.params.cpf, req.body.cep, req.body.numero,], function(err) {
+           [req.body.nome, req.body.telefone, req.body.cep, req.body.numero, req.params.cpf], function(err) {
             if (err){
                 res.status(500).send('Erro ao alterar dados.');
             } else if (this.changes == 0) {
@@ -94,7 +94,7 @@ app.delete('/condominos/:cpf', (req, res, next) => {
          res.status(500).send('Erro ao remover Condomino.');
       } else if (this.changes == 0) {
          console.log("Cliente não encontrado.");
-         res.status(404).send('Condomins não encontrado.');
+         res.status(404).send('Condominio não encontrado.');
       } else {
          res.status(200).send('Condomino removido com sucesso!');
       }
