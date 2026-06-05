@@ -29,7 +29,7 @@ var db = new sqlite3.Database('./logs.db', (err) => {
 db.run(`CREATE TABLE IF NOT EXISTS logs (
                 entrega_id INTEGER,
                 retirado INTEGER NOT NULL CHECK (retirado IN (0, 1)),
-                cpf INTEGER NOT NULL,
+                cpf TEXT NOT NULL,
                 armario_id INTEGER NOT NULL,
                 numero_gaveta INTEGER NOT NULL,
                 tamanho_gaveta TEXT NOT NULL CHECK(tamanho_gaveta IN ('P', 'M', 'G', 'XG')),
