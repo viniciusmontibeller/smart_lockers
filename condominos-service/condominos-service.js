@@ -27,11 +27,12 @@ var db = new sqlite3.Database('./condominos.db', (err) => {
 
 // Estabelecer criacao de tabela. Cria a tabela cadastro, caso ela não exista
 db.run(`CREATE TABLE IF NOT EXISTS condominos
-        (cpf INTEGER PRIMARY KEY NOT NULL,
+        (cpf TEXT PRIMARY KEY NOT NULL,
         nome TEXT NOT NULL,
         telefone TEXT NOT NULL,
         cep TEXT NOT NULL,
-        numero TEXT NOT NULL
+        numero TEXT NOT NULL,
+        armario_id INTEGER NOT NULL
         )`, 
         [], (err) => {
            if (err) {
@@ -43,8 +44,8 @@ db.run(`CREATE TABLE IF NOT EXISTS condominos
 
 //CADASTRA um novo Condomino
 app.post('/condominos', (req, res, next) => {
-    db.run(`INSERT INTO condominos(cpf, nome, telefone, cep, numero) VALUES(?,?,?,?,?)`, 
-         [req.body.cpf, req.body.nome, req.body.telefone, req.body.cep, req.body.numero], (err) => {
+    db.run(`INSERT INTO condominos(cpf, nome, telefone, cep, numero, armario_id) VALUES(?,?,?,?,?,?)`, 
+         [req.body.cpf, req.body.nome, req.body.telefone, req.body.cep, req.body.numero, req.body.armario_id], (err) => {
         if (err) {
             console.log("Error: " + err);
             res.status(500).send('Erro ao cadastrar condomino.');
@@ -53,6 +54,20 @@ app.post('/condominos', (req, res, next) => {
             res.status(200).send('Condominos cadastrado com sucesso!');
         }
     });
+});
+
+app.get('/condominos/armario/:armario_id', (req, res) => {
+    db.all(
+        `SELECT * FROM condominos WHERE armario_id = ?`,
+        [req.params.armario_id],
+        (err, result) => {
+            if (err) {
+                return res.status(500).send('Erro ao obter condôminos.');
+            }
+
+            res.status(200).json(result);
+        }
+    );
 });
 
 //RETORNA cadastro do Condomino com base no CPF
@@ -71,11 +86,12 @@ app.get('/condominos/:cpf', (req, res, next) => {
     });
 });
 
+
 // ALTERA o cadastro de um cliente
 app.patch('/condominos/:cpf', (req, res, next) => {
     db.run(`UPDATE condominos SET nome = COALESCE(?,nome), telefone = COALESCE(?,telefone), 
-        cep = COALESCE(?,cep), numero = COALESCE(?,numero) WHERE cpf = ?`,
-           [req.body.nome, req.body.telefone, req.body.cep, req.body.numero, req.params.cpf], function(err) {
+        cep = COALESCE(?,cep), numero = COALESCE(?,numero), armario_id = COALESCE(?, armario_id) WHERE cpf = ?`,
+           [req.body.nome, req.body.telefone, req.body.cep, req.body.numero, req.body.armario_id, req.params.cpf], function(err) {
             if (err){
                 res.status(500).send('Erro ao alterar dados.');
             } else if (this.changes == 0) {
