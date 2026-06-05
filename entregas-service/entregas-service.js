@@ -4,6 +4,18 @@ const app = express();
 
 // Body Parser - usado para processar dados da requisição HTTP
 const bodyParser = require('body-parser');
+
+function getDataHoraAtual() {
+    const agora = new Date();
+
+    const pad = (valor) => String(valor).padStart(2, '0');
+
+    const data = `${agora.getFullYear()}-${pad(agora.getMonth() + 1)}-${pad(agora.getDate())}`;
+    const hora = `${pad(agora.getHours())}:${pad(agora.getMinutes())}:${pad(agora.getSeconds())}`;
+
+    return { data, hora };
+}
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
@@ -36,7 +48,8 @@ db.run(`CREATE TABLE IF NOT EXISTS entregas (
                 numero_gaveta INTEGER NOT NULL,
                 tamanho_gaveta TEXT NOT NULL CHECK(tamanho_gaveta IN ('P', 'M', 'G', 'XG')),
                 data DATE NOT NULL,
-                hora TIME NOT NULL
+                hora TIME NOT NULL,
+                UNIQUE(armario_id, numero_gaveta)
                 
         )`, 
         [], (err) => {
@@ -115,6 +128,8 @@ app.post('/entregas', async (req, res) => {
                 .send('Erro ao validar dados.');
     }
 
+    const { data, hora } = getDataHoraAtual();
+
     db.run(
         `INSERT INTO entregas
         (
@@ -133,8 +148,8 @@ app.post('/entregas', async (req, res) => {
             gaveta.armario_id,
             gaveta.numero,
             req.body.tamanho,
-            req.body.data,
-            req.body.hora,
+            data,
+            hora,
         ],
         async function(err) {
 
@@ -154,8 +169,8 @@ app.post('/entregas', async (req, res) => {
                         armario_id: gaveta.armario_id,
                         numero_gaveta: gaveta.numero,
                         tamanho_gaveta: req.body.tamanho,
-                        data: req.body.data,
-                        hora: req.body.hora
+                        data,
+                        hora
                     }
                 );
 
@@ -179,6 +194,8 @@ app.post('/entregas/abrir', async (req, res) => {
         armario_id,
         numero_gaveta
     } = req.body;
+
+    const { data, hora } = getDataHoraAtual();
 
     db.get(
         `SELECT *
@@ -216,8 +233,8 @@ app.post('/entregas/abrir', async (req, res) => {
                         armario_id: entrega.armario_id,
                         numero_gaveta: entrega.numero_gaveta,
                         tamanho_gaveta: entrega.tamanho_gaveta,
-                        data: entrega.data,
-                        hora: entrega.hora
+                        data,
+                        hora
                     }
                 );
 
@@ -268,7 +285,7 @@ app.get('/entregas/condominos/:cpf', (req, res) => {
 });
 
 app.get('/entregas/:entrega_id', (req, res, next) => {
-    db.all( `SELECT * FROM entregas WHERE entrega_id = ?`, 
+    db.get( `SELECT * FROM entregas WHERE entrega_id = ?`, 
             req.params.entrega_id, (err, result) => {
         if (err) { 
             console.log("Erro: "+err);
