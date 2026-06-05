@@ -31,11 +31,12 @@ var db = new sqlite3.Database('./entregas.db', (err) => {
 // Estabelecer criacao de tabela. Cria a tabela entrega, caso ela não exista
 db.run(`CREATE TABLE IF NOT EXISTS entregas (
                 entrega_id INTEGER PRIMARY KEY,
-                cpf INTEGER,
-                armario_id INTEGER,
-                numero_gaveta INTEGER,
-                data DATE,
-                hora TIME
+                cpf INTEGER NOT NULL,
+                armario_id INTEGER NOT NULL,
+                numero_gaveta INTEGER NOT NULL,
+                tamanho_gaveta TEXT NOT NULL CHECK(tamanho_gaveta IN ('P', 'M', 'G', 'XG')),
+                data DATE NOT NULL,
+                hora TIME NOT NULL
                 
         )`, 
         [], (err) => {
@@ -83,35 +84,35 @@ app.get('/gavetas-livres/:armarioId/:tamanho', async (req, res) => {
 //CRIA ENTREGA
 app.post('/entregas', async (req, res) => {
 
+    let gaveta
 
-let gaveta    
-        try {
-        // Verifica se o condômino existe
+    try {
+    // Verifica se o condômino existe
         await axios.get(
-            `http://localhost:8090/condominos/${req.body.cpf}`
-        );
+        `http://localhost:8090/condominos/${req.body.cpf}`
+    );
 
-        // Verifica gavetas livres
-        const resposta = await axios.get(
-            `http://localhost:8070/gavetas-livres/${req.body.tamanho}`
-        );
+    // Verifica gavetas livres
+    const resposta = await axios.get(
+        `http://localhost:8070/gavetas-livres/${req.body.armario_id}/${req.body.tamanho}`
+    );
 
-        if (resposta.data.length === 0) {
-            return res.status(400)
-                .send('Não há gavetas disponíveis.');
-        }
+    if (resposta.data.length === 0) {
+        return res.status(400)
+            .send('Não há gavetas disponíveis.');
+    }
 
-        gaveta = resposta.data[0]
+    gaveta = resposta.data[0]
 
     } catch (err) {
 
         if (err.response?.status === 404) {
-            return res.status(404)
-                .send('Condômino ou gaveta não encontrados.');
-        }
+                return res.status(404)
+                    .send('Condômino ou gaveta não encontrados.');
+            }
 
-        return res.status(500)
-            .send('Erro ao validar dados.');
+            return res.status(500)
+                .send('Erro ao validar dados.');
     }
 
     db.run(
@@ -121,15 +122,17 @@ let gaveta
             cpf,
             armario_id,
             numero_gaveta,
+            tamanho_gaveta,
             data,
             hora
         )
-        VALUES (?, ?, ?, ?, ?, ?)`,
+        VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
             req.body.entrega_id,
             req.body.cpf,
             gaveta.armario_id,
             gaveta.numero,
+            req.body.tamanho,
             req.body.data,
             req.body.hora,
         ],
@@ -150,6 +153,7 @@ let gaveta
                         cpf: req.body.cpf,
                         armario_id: gaveta.armario_id,
                         numero_gaveta: gaveta.numero,
+                        tamanho_gaveta: req.body.tamanho,
                         data: req.body.data,
                         hora: req.body.hora
                     }
@@ -211,6 +215,7 @@ app.post('/entregas/abrir', async (req, res) => {
                         cpf: entrega.cpf,
                         armario_id: entrega.armario_id,
                         numero_gaveta: entrega.numero_gaveta,
+                        tamanho_gaveta: entrega.tamanho_gaveta,
                         data: entrega.data,
                         hora: entrega.hora
                     }
@@ -247,8 +252,23 @@ app.post('/entregas/abrir', async (req, res) => {
     );
 });
 
+// estregas por condomino
+app.get('/entregas/condominos/:cpf', (req, res) => {
+    db.all(
+        `SELECT * FROM entregas WHERE cpf = ?`,
+        [req.params.cpf],
+        (err, result) => {
+            if (err) {
+                return res.status(500).send('Erro ao obter entregas.');
+            }
+
+            res.status(200).json(result);
+        }
+    );
+});
+
 app.get('/entregas/:entrega_id', (req, res, next) => {
-    db.get( `SELECT * FROM entregas WHERE entrega_id = ?`, 
+    db.all( `SELECT * FROM entregas WHERE entrega_id = ?`, 
             req.params.entrega_id, (err, result) => {
         if (err) { 
             console.log("Erro: "+err);
