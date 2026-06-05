@@ -137,12 +137,13 @@ app.get('/gavetas/:id', (req, res, next) => {
 
 
 // retirna gaaveta com id e tamanho
-app.get('/gavetas/tamanho/:tamanho', (req, res) => {
+app.get('/gavetas/:id/tamanho/:tamanho', (req, res) => {
 
     db.all(
         `SELECT *
          FROM gavetas
-         WHERE tamanho = ?`,
+         WHERE armario_id = ? AND tamanho = ?`
+         ,
         [req.params.tamanho],
         (err, result) => {
 

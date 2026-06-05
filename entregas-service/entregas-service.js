@@ -47,10 +47,10 @@ db.run(`CREATE TABLE IF NOT EXISTS entregas (
 
 
 //verificação gavetas
-app.get('/gavetas-livres/:tamanho', async (req, res) => {
+app.get('/gavetas-livres/:armarioId/:tamanho', async (req, res) => {
     try {
         const resposta = await axios.get(
-            `http://localhost:8080/gavetas/tamanho/${req.params.tamanho}`
+            `http://localhost:8080/gavetas/${req.params.armarioId}/tamanho/${req.params.tamanho}`
         );
         const gavetas = resposta.data;
         db.all(
