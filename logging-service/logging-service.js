@@ -58,6 +58,48 @@ app.post('/log', (req, res, next) => {
     });
 });
 
+app.get('/log/armarios/:armario_id', (req, res) => {
+    db.all(
+        `SELECT * FROM logs WHERE armario_id = ?`,
+        [req.params.armario_id],
+        (err, result) => {
+            if (err) {
+                return res.status(500).send('Erro ao obter logs.');
+            }
+
+            res.status(200).json(result);
+        }
+    );
+});
+
+app.get('/log/condominos/:cpf', (req, res) => {
+    db.all(
+        `SELECT * FROM logs WHERE cpf = ?`,
+        [req.params.cpf],
+        (err, result) => {
+            if (err) {
+                return res.status(500).send('Erro ao obter logs.');
+            }
+
+            res.status(200).json(result);
+        }
+    );
+});
+
+app.get('/log/retirados', (req, res) => {
+    db.all(
+        `SELECT * FROM logs WHERE retirado = 1`,
+        [],
+        (err, result) => {
+            if (err) {
+                return res.status(500).send('Erro ao obter logs.');
+            }
+
+            res.status(200).json(result);
+        }
+    );
+});
+
 // busca todos os log
 app.get('/log', (req, res, next) => {
     db.all(`SELECT * FROM logs`, [], (err, result) => {
