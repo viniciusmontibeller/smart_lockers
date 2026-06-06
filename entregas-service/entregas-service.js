@@ -5,6 +5,7 @@ const app = express();
 // Body Parser - usado para processar dados da requisição HTTP
 const bodyParser = require('body-parser');
 
+// retorna data e hora atual
 function getDataHoraAtual() {
     const agora = new Date();
 
@@ -42,7 +43,7 @@ var db = new sqlite3.Database('./entregas.db', (err) => {
 
 // Estabelecer criacao de tabela. Cria a tabela entrega, caso ela não exista
 db.run(`CREATE TABLE IF NOT EXISTS entregas (
-                entrega_id INTEGER PRIMARY KEY,
+                entrega_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 cpf TEXT NOT NULL,
                 armario_id INTEGER NOT NULL,
                 numero_gaveta INTEGER NOT NULL,
@@ -140,7 +141,6 @@ app.post('/entregas', async (req, res) => {
     db.run(
         `INSERT INTO entregas
         (
-            entrega_id,
             cpf,
             armario_id,
             numero_gaveta,
@@ -148,9 +148,8 @@ app.post('/entregas', async (req, res) => {
             data,
             hora
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        VALUES (?, ?, ?, ?, ?, ?)`,
         [
-            req.body.entrega_id,
             req.body.cpf,
             gaveta.armario_id,
             gaveta.numero,
@@ -165,12 +164,14 @@ app.post('/entregas', async (req, res) => {
                     .send('Erro ao cadastrar entrega.');
             }
 
+            const entrega_id = this.lastID;
+
             try {
 
                 await axios.post(
                     'http://localhost:8060/log',
                     {
-                        entrega_id: req.body.entrega_id,
+                        entrega_id,
                         retirado: 0,
                         cpf: req.body.cpf,
                         armario_id: gaveta.armario_id,
@@ -195,14 +196,13 @@ app.post('/entregas', async (req, res) => {
 
 //CRIA ENTREGA 2 (opcional) - Caso entregador ja tenha selecionado condomino valido, e escolhido uma gaveta 
 app.post('/entregas/selecionada', async (req, res) => {
-    const { entrega_id, cpf, armario_id, numero_gaveta, tamanho_gaveta } = req.body
+    const { cpf, armario_id, numero_gaveta, tamanho_gaveta } = req.body
 
     const { data, hora } = getDataHoraAtual();
 
     db.run(
         `INSERT INTO entregas
         (
-            entrega_id,
             cpf,
             armario_id,
             numero_gaveta,
@@ -210,9 +210,8 @@ app.post('/entregas/selecionada', async (req, res) => {
             data,
             hora
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        VALUES (?, ?, ?, ?, ?, ?)`,
         [
-            entrega_id,
             cpf,
             armario_id,
             numero_gaveta,
@@ -226,6 +225,8 @@ app.post('/entregas/selecionada', async (req, res) => {
                 console.log("Erro ao cadastrar entrega: " + err);
                 return res.status(500).send('Erro ao cadastrar entrega. Verifique se a gaveta já está ocupada.')
             }
+
+            const entrega_id = this.lastID;
 
             try {
                 await axios.post(
