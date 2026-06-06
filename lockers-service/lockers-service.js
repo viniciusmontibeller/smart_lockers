@@ -123,6 +123,18 @@ app.get('/armarios', (req, res, next) => {
     });
 });
 
+// Retorna todas as gavetas
+app.get('/gavetas', (req, res, next) => {
+    db.all(`SELECT * FROM gavetas`, (err, result) => {
+        if (err) {
+             console.log("Erro: " + err);
+             res.status(500).send('Erro ao obter dados.');
+        } else {
+            res.status(200).json(result);
+        }
+    });
+});
+
 // retorna gavetas por armario selecionado
 app.get('/gavetas/:id', (req, res, next) => {
     db.all(`SELECT * FROM gavetas WHERE armario_id = ?`, [req.params.id], (err, result) => {
@@ -158,7 +170,8 @@ app.get('/gavetas/:id/tamanho/:tamanho', (req, res) => {
 
 // busca todos os armarios e gavetas - > Reduntante, pode ser apagado
 app.get('/armariosegavetas', (req, res, next) => {
-    db.all(`SELECT * FROM armarios JOIN gavetas ON armarios.id = gavetas.armario_id`, [], (err, result) => {
+    db.all(`SELECT armarios.*, gavetas.numero, gavetas.tamanho FROM armarios JOIN gavetas ON armarios.id = gavetas.armario_id ORDER BY armarios.id, gavetas.numero`,
+        [], (err, result) => {
         if (err) {
              console.log("Erro: " + err);
              res.status(500).send('Erro ao obter dados.');
@@ -169,8 +182,9 @@ app.get('/armariosegavetas', (req, res, next) => {
 });
 
 // retorna armario e suas gavetas - > Reduntante, pode ser apagado
-app.get('/armariocomgavetas/:id', (req, res, next) => {
-    db.all(`SELECT * FROM armarios JOIN gavetas ON armarios.id = gavetas.armario_id WHERE gavetas.armario_id = ?`, [req.params.id], (err, result) => {
+app.get('/armariosegavetas/:armario_id', (req, res, next) => {
+    db.all(`SELECT armarios.*, gavetas.numero, gavetas.tamanho FROM armarios JOIN gavetas ON armarios.id = gavetas.armario_id WHERE armarios.id = ? ORDER BY gavetas.numero`,
+        [req.params.armario_id], (err, result) => {
         if (err) {
              console.log("Erro: " + err);
              res.status(500).send('Erro ao obter dados.');
@@ -193,7 +207,21 @@ app.patch('/armarios/:id', (req, res, next) => {
             }
     });
 });
-// nao sera alterado as gavetas, criou o armario criou gavetas pela sua existencia.
+// nao sera alterado as gavetas
+
+// caso alguma gaveta de problema
+app.delete('/gavetas/:armario_id/:numero', (req, res, next) => {
+    db.run(`DELETE FROM gavetas WHERE armario_id = ? AND numero = ?`, [req.params.armario_id, req.params.numero], function(err) {
+        if (err){
+            res.status(500).send('Erro ao remover armario.');
+        } else if (this.changes == 0) {
+            console.log("Armario não encontrado.");
+            res.status(404).send('Armario não encontrado.');
+        } else {
+            res.status(200).send('Armario removido com sucesso!');
+        }
+    });
+});
 
 // Ao deletar o armario, e deletado as gavetas -> FOREIGN KEY (armario_id) REFERENCES armarios(id) ON DELETE CASCADE
 app.delete('/armarios/:id', (req, res, next) => {

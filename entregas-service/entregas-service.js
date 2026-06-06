@@ -378,3 +378,72 @@ app.post('/entregas/abrir', async (req, res) => {
         }
     );
 });
+
+// ABRE TODAS AS GAVETAS DE UM CONDÔMINO EM UM ARMÁRIO
+app.post('/entregas/abrir-todas', (req, res) => {
+    const { cpf, armario_id } = req.body;
+
+    db.all(
+        `SELECT *
+         FROM entregas
+         WHERE cpf = ?
+         AND armario_id = ?`,
+        [cpf, armario_id],
+        async (err, entregas) => {
+            if (err) {
+                return res.status(500).send('Erro ao buscar entregas.');
+            }
+
+            if (entregas.length === 0) {
+                return res.status(404).send('Nenhuma entrega encontrada para este condômino neste armário.');
+            }
+
+            try {
+                for (const entrega of entregas) {
+                    const { data, hora } = getDataHoraAtual();
+
+                    await axios.post(
+                        'http://localhost:8050/abrir',
+                        {
+                            armario_id: entrega.armario_id,
+                            numero_gaveta: entrega.numero_gaveta
+                        }
+                    );
+
+                    await axios.post(
+                        'http://localhost:8060/log',
+                        {
+                            entrega_id: entrega.entrega_id,
+                            retirado: 1,
+                            cpf: entrega.cpf,
+                            armario_id: entrega.armario_id,
+                            numero_gaveta: entrega.numero_gaveta,
+                            tamanho_gaveta: entrega.tamanho_gaveta,
+                            data,
+                            hora
+                        }
+                    );
+                }
+
+                db.run(
+                    `DELETE FROM entregas
+                     WHERE cpf = ?
+                     AND armario_id = ?`,
+                    [cpf, armario_id],
+                    function(err) {
+                        if (err) {
+                            return res.status(500).send('Erro ao remover entregas.');
+                        }
+
+                        return res.status(200).json({
+                            mensagem: 'Todas as gavetas do condômino foram abertas e as entregas foram retiradas.',
+                            quantidade: entregas.length
+                        });
+                    }
+                );
+            } catch (err) {
+                return res.status(500).send('Erro ao abrir uma ou mais gavetas.');
+            }
+        }
+    );
+});

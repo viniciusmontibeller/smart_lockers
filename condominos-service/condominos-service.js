@@ -51,11 +51,27 @@ app.post('/condominos', (req, res, next) => {
             res.status(500).send('Erro ao cadastrar condomino.');
         } else {
             console.log('Condomino cadastrado com sucesso!');
-            res.status(200).send('Condominos cadastrado com sucesso!');
+            res.status(200).send('Condomino cadastrado com sucesso!');
         }
     });
 });
 
+// busca condominos por com permissao para o armario selecionado
+app.get('/condominos', (req, res) => {
+    db.all(
+        `SELECT * FROM condominos`,
+        [],
+        (err, result) => {
+            if (err) {
+                return res.status(500).send('Erro ao obter condôminos.');
+            }
+
+            res.status(200).json(result);
+        }
+    );
+});
+
+// busca condominos por com permissao para o armario selecionado
 app.get('/condominos/armario/:armario_id', (req, res) => {
     db.all(
         `SELECT * FROM condominos WHERE armario_id = ?`,
